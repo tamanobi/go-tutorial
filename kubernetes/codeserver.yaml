@@ -1,0 +1,43 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: vscode1-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vscode1
+  template:
+    metadata:
+      labels:
+        app: vscode1
+    spec:
+      containers:
+        - name: dind
+          image: docker:19.03.2-dind
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: ""
+          securityContext:
+            privileged: true
+          ports:
+            - containerPort: 2375
+        - name: vscode
+          image: tamanobi/code-server-with-docker
+          env:
+            - name: DOCKER_HOST
+              value: "tcp://localhost:2375"
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vscode1-svc
+spec:
+  type: LoadBalancer
+  selector:
+    app: vscode1
+  ports:
+    - port: 80
+      targetPort: 8080
